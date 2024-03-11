@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        .shadow-custom {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto p-6">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center">
+                <input type="search" placeholder="search" class="px-4 py-2 border rounded shadow-sm" id="search-input">
+            </div>
+            <div class="flex items-center">
+                <button class="bg-white hover:bg-gray-200 text-gray-600 py-2 px-4 rounded shadow mr-4" id="userid"></button>
+                <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow" id="logout-button">Logout</button>
+                <button id="menu-button" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow ml-4">
+                    <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6H21M8 12H21M8 18H21M3 6H3.01M3 12H3.01M3 18H3.01"></path></svg>
+                </button> 
+            </div>
+        </div>
+        <div class="flex gap-4">
+            <div class="w-2/3 p-4 bg-white rounded shadow-custom">
+                <div id="chart"></div>
+            </div>
+            <div class="w-1/3 p-4 bg-white rounded shadow-custom">
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Stock Name:</label>
+                    <p class="text-gray-600" id="stock-name">AAPL</p>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Current Price:</label>
+                    <p class="text-gray-600" id="stock-price">$150.00</p>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Increase Percentage:</label>
+                    <p class="text-gray-600" id="stock-perc">+1.5%</p>
+                </div>
+                <div class="flex gap-2">
+                    <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-8 rounded shadow w-full">Sell</button>
+                    <button class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-8 rounded shadow w-full">Buy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+
+        // Function to get the value of a specific cookie by name
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        // Get the username cookie value
+        const username = getCookie('username');
+
+        if (username) {
+            fetch('./json/money.json')
+                .then(response => response.json())
+                .then(moneys => {
+                    var money = moneys[username];
+                    document.getElementById('userid').textContent = username + ' / ' + money.toString() + '$';
+                })
+                .catch(error => console.error('Error loading money information:', error));
+        } else {
+            alert('Login Failed. Redirecting to the login page');
+            window.location.href = 'http://192.168.0.26:8080/main.html';
+        }
+
+        var data1 = 0;
+        var data2 = 0;
+        var data3 = 0;
+        var data4 = 0;
+        var data5 = 0;
+        var data6 = 0;
+        var data7 = 0;
+
+        document.getElementById('search-input').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                var searchValue = document.querySelector('input[type="search"]').value;
+                window.location.href = 'http://192.168.0.26:8080/stock.' + searchValue + '.html';
+            }
+        });
+
+        document.getElementById('logout-button').addEventListener('click', function() {
+        window.location.href = 'http://192.168.0.26:8080/main.html';
+        }); 
+
+        fetch('./json/AAPL.json')
+            .then(response => response.json())
+            .then(data => {
+                var data1 = data.a;
+                var data2 = data.b;
+                var data3 = data.c;
+                var data4 = data.d;
+                var data5 = data.e;
+                var data6 = data.f;
+                var data7 = data.g;
+                var perc = (data7 / data6) * 100;
+                var roundedResult = Math.round(perc * 100) / 100;
+                var perc7 = (data7 / data1) * 100;
+                var roundedResult7 = Math.round(perc7 * 100) / 100;
+                var data8 = data.name;
+
+                document.getElementById('stock-name').textContent = data8;
+                document.getElementById('stock-price').textContent = "$" + data7;
+                document.getElementById('stock-perc').textContent = (roundedResult - 100) + "%  /  " + (roundedResult7 - 100) + "%";
+
+                var options = {
+                    chart: {
+                        type: 'line',
+                        height: 350,
+                        zoom: {
+                            enabled: false
+                        }
+                    },
+                    series: [{
+                        name: 'Stock Price',
+                        data: [data1, data2, data3, data4, data5, data6, data7]
+                    }],
+                    xaxis: {
+                        categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                    }
+                }
+
+                var chart = new ApexCharts(document.querySelector("#chart"), options);
+                chart.render();
+            })
+            .catch(error => console.error('Error loading account information:', error));
+
+    </script>
+</body>
+</html>
